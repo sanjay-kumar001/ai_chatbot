@@ -32,7 +32,7 @@ def _normalize_tool_call(tc: dict) -> dict:
 		"type": "function",
 		"function": {
 			"name": name,
-			"arguments": json.dumps(args) if isinstance(args, dict) else args,
+			"arguments": json.dumps(args, default=str) if isinstance(args, dict) else args,
 		},
 	}
 
@@ -143,7 +143,7 @@ def get_conversation_history(conversation_id: str) -> list[dict]:
 					raw_results = []
 
 				for i, tc in enumerate(openai_tcs):
-					result_content = json.dumps(raw_results[i]) if i < len(raw_results) else "{}"
+					result_content = json.dumps(raw_results[i], default=str) if i < len(raw_results) else "{}"
 					history.append(
 						{
 							"role": "tool",

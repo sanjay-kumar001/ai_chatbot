@@ -162,8 +162,8 @@ def run_orchestrated(
 			"content": synthesis_content,
 			"timestamp": frappe.utils.now(),
 			"tokens_used": context.total_tokens,
-			"tool_calls": json.dumps(context.all_tool_calls) if context.all_tool_calls else None,
-			"tool_results": json.dumps(context.all_tool_results) if context.all_tool_results else None,
+			"tool_calls": json.dumps(context.all_tool_calls, default=str) if context.all_tool_calls else None,
+			"tool_results": json.dumps(context.all_tool_results, default=str) if context.all_tool_results else None,
 		}
 	).insert()
 

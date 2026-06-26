@@ -168,6 +168,10 @@ def report_stock_balance(
 	if item_group:
 		filters["item_group"] = item_group
 
+	if item_code:
+		# ERPNext stock_balance report uses isin() which expects a list, not a bare string
+		filters["item_code"] = [item_code] if isinstance(item_code, str) else item_code
+
 	from erpnext.stock.report.stock_balance.stock_balance import execute
 
 	result = run_report(execute, filters)

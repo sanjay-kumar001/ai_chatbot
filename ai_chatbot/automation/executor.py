@@ -124,7 +124,7 @@ def execute_prompt(
 				history.append(
 					{
 						"role": "tool",
-						"content": json.dumps(result),
+						"content": json.dumps(result, default=str),
 						"tool_call_id": tool_call.get("id", f"tool_{i}"),
 					}
 				)

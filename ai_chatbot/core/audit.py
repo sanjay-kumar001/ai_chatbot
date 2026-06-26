@@ -135,7 +135,7 @@ def _insert_audit_log(
 				"completion_tokens": completion_tokens,
 				"cost": cost,
 				"tool_name": tool_name,
-				"tool_args": json.dumps(tool_args) if tool_args else None,
+				"tool_args": json.dumps(tool_args, default=str) if tool_args else None,
 				"tool_result_summary": tool_result_summary,
 				"error_message": error_message,
 			}

@@ -203,7 +203,7 @@ def compress_tool_results_in_history(history: list[dict], max_rows: int = 20) ->
 				content = json.loads(msg["content"]) if isinstance(msg["content"], str) else msg["content"]
 				if isinstance(content, dict):
 					content = compress_tool_result(content, max_rows)
-					compressed.append({**msg, "content": json.dumps(content)})
+					compressed.append({**msg, "content": json.dumps(content, default=str)})
 					continue
 			except (json.JSONDecodeError, TypeError):
 				pass
@@ -256,7 +256,7 @@ def progressively_compress_history(messages: list[dict]) -> list[dict]:
 							summary[k] = v
 						elif not isinstance(v, (list, dict)):
 							summary[k] = v
-					result.append({**msg, "content": json.dumps(summary)})
+					result.append({**msg, "content": json.dumps(summary, default=str)})
 					continue
 			except (json.JSONDecodeError, TypeError):
 				pass
@@ -413,7 +413,7 @@ def _format_messages_for_summary(messages: list[dict]) -> str:
 				data = json.loads(content) if isinstance(content, str) else content
 				if isinstance(data, dict):
 					brief = {k: v for k, v in data.items() if not isinstance(v, (list, dict))}
-					content = json.dumps(brief)[:200]
+					content = json.dumps(brief, default=str)[:200]
 			except (json.JSONDecodeError, TypeError):
 				content = str(content)[:200]
 		elif isinstance(content, list):

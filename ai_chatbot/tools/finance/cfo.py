@@ -583,31 +583,60 @@ def get_cfo_dashboard(from_date=None, to_date=None, company=None):
 		to_date = to_date or fy_to
 
 	# ── P&L data ──
-	pnl = _pnl_totals(comp, from_date, to_date)
+	try:
+		pnl = _pnl_totals(comp, from_date, to_date)
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), "CFO Dashboard: P&L failed")
+		pnl = {"income": 0, "expense": 0, "net_profit": 0}
 	revenue = flt(pnl["income"], 2)
 	total_expenses = flt(pnl["expense"], 2)
 	net_profit = flt(pnl["net_profit"], 2)
 
 	# ── AR / AP ──
-	total_receivables = _ar_total(comp)
-	total_payables = _ap_total(comp)
+	try:
+		total_receivables = _ar_total(comp)
+	except Exception:
+		total_receivables = 0.0
+	try:
+		total_payables = _ap_total(comp)
+	except Exception:
+		total_payables = 0.0
 
 	# ── Balance Sheet ──
-	bs = _balance_sheet_totals(comp, from_date, to_date)
+	try:
+		bs = _balance_sheet_totals(comp, from_date, to_date)
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), "CFO Dashboard: Balance Sheet failed")
+		bs = {"total_asset": 0, "total_liability": 0, "total_equity": 0}
 	total_assets = flt(bs["total_asset"], 2)
 
 	# ── Cash & Inventory ──
-	cash_position = flt(_cash_position(company), 2)
-	inventory = flt(_inventory_value(company), 2)
+	try:
+		cash_position = flt(_cash_position(company), 2)
+	except Exception:
+		cash_position = 0.0
+	try:
+		inventory = flt(_inventory_value(company), 2)
+	except Exception:
+		inventory = 0.0
 
 	# ── Financial Ratios (from ERPNext report) ──
-	ratios = _financial_ratios(comp)
+	try:
+		ratios = _financial_ratios(comp)
+	except Exception:
+		ratios = {}
 
 	# ── Cash Flow Summary ──
-	cf = _cash_flow_summary(company, from_date, to_date)
+	try:
+		cf = _cash_flow_summary(company, from_date, to_date)
+	except Exception:
+		cf = {}
 
 	# ── Budget Summary ──
-	budget = _budget_summary(comp)
+	try:
+		budget = _budget_summary(comp)
+	except Exception:
+		budget = {}
 
 	# ── Calculate margins ──
 	net_margin_pct = flt((net_profit / revenue) * 100, 1) if revenue else 0
@@ -619,7 +648,10 @@ def get_cfo_dashboard(from_date=None, to_date=None, company=None):
 	# ── YoY Comparison ──
 	prior_from = str(add_years(from_date, -1))
 	prior_to = str(add_years(to_date, -1))
-	prev_pnl = _pnl_totals(comp, prior_from, prior_to)
+	try:
+		prev_pnl = _pnl_totals(comp, prior_from, prior_to)
+	except Exception:
+		prev_pnl = {"income": 0, "net_profit": 0}
 	prev_revenue = flt(prev_pnl["income"])
 	prev_net_profit = flt(prev_pnl["net_profit"])
 
