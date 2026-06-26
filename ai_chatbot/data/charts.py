@@ -150,8 +150,8 @@ def build_multi_series_chart(
 		"color": CHART_COLORS,
 		"title": {"text": title, "left": "center", "textStyle": {"fontSize": 14}},
 		"tooltip": {"trigger": "axis"},
-		"legend": {"bottom": 0, "data": [s["name"] for s in series_list]},
-		"grid": {"left": "15%", "right": "5%", "bottom": "15%", "top": "22%"},
+		"legend": {"top": 26, "type": "scroll", "data": [s["name"] for s in series_list]},
+		"grid": {"left": "15%", "right": "5%", "bottom": "14%", "top": "30%"},
 		"xAxis": {
 			"type": "category",
 			"data": categories,
@@ -231,8 +231,8 @@ def build_stacked_bar_chart(
 			"trigger": "axis",
 			"axisPointer": {"type": "shadow"},
 		},
-		"legend": {"bottom": 0, "data": [s["name"] for s in series_list]},
-		"grid": {"left": "15%", "right": "5%", "bottom": "15%", "top": "22%"},
+		"legend": {"top": 26, "type": "scroll", "data": [s["name"] for s in series_list]},
+		"grid": {"left": "15%", "right": "5%", "bottom": "14%", "top": "30%"},
 		"xAxis": {
 			"type": "category",
 			"data": categories,

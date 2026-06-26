@@ -65,8 +65,12 @@ def build_forecast_chart(
 		"color": CHART_COLORS,
 		"title": {"text": title, "left": "center", "textStyle": {"fontSize": 14}},
 		"tooltip": {"trigger": "axis"},
-		"legend": {"bottom": 0, "data": ["Historical", "Forecast", "95% Confidence"]},
-		"grid": {"left": "15%", "right": "5%", "bottom": "15%", "top": "22%"},
+		"legend": {
+			"top": 26,
+			"type": "scroll",
+			"data": ["Historical", "Forecast", "95% Confidence"],
+		},
+		"grid": {"left": "15%", "right": "5%", "bottom": "14%", "top": "30%"},
 		"xAxis": {
 			"type": "category",
 			"data": all_labels,
@@ -216,8 +220,8 @@ def build_trend_analysis_chart(
 		"color": CHART_COLORS,
 		"title": {"text": title, "left": "center", "textStyle": {"fontSize": 14}},
 		"tooltip": {"trigger": "axis"},
-		"legend": {"bottom": 0, "data": legend_data},
-		"grid": {"left": "15%", "right": "5%", "bottom": "15%", "top": "22%"},
+		"legend": {"top": 26, "type": "scroll", "data": legend_data},
+		"grid": {"left": "15%", "right": "5%", "bottom": "14%", "top": "30%"},
 		"xAxis": {
 			"type": "category",
 			"data": labels,
@@ -287,7 +291,8 @@ def build_cash_flow_forecast_chart(
 		"title": {"text": "Cash Flow Forecast", "left": "center", "textStyle": {"fontSize": 14}},
 		"tooltip": {"trigger": "axis"},
 		"legend": {
-			"bottom": 0,
+			"top": 26,
+			"type": "scroll",
 			"data": [
 				"Inflow",
 				"Inflow (forecast)",
@@ -297,7 +302,7 @@ def build_cash_flow_forecast_chart(
 				"Net (forecast)",
 			],
 		},
-		"grid": {"left": "15%", "right": "5%", "bottom": "18%", "top": "22%"},
+		"grid": {"left": "15%", "right": "5%", "bottom": "14%", "top": "32%"},
 		"xAxis": {
 			"type": "category",
 			"data": all_labels,
