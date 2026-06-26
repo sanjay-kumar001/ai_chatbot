@@ -186,6 +186,72 @@ Notes on Predictive Analytics:
 
 ---
 
+## Prescriptive Analytics
+
+Prescriptive tools go beyond describing what happened — they compute specific actions to take. Each tool returns an **action** field, a chart, and quantified impact estimates. These tools require sufficient historical data (typically 6+ months).
+
+### Inventory Optimisation (`optimize_inventory`)
+
+| Prompt | Output | Expected Result |
+|--------|--------|-----------------|
+| What is the optimal reorder quantity for [Item Name]? | mixed | EOQ, safety stock, reorder point, carrying/order cost estimates, stockout risk (high/medium/low), bar chart |
+| Optimise inventory for item [Item Code] at 99% service level | mixed | EOQ recalculated with z=2.33 for 99% service level, safety stock, reorder point, and bar chart |
+| Show EOQ and reorder point for [Item Name] with lead time 14 days | mixed | EOQ and safety stock adjusted to 14-day lead time, cost projections |
+| What is the safety stock level for [Item Name]? | mixed | Safety stock with z-score for 95% service level, stockout risk label, current stock vs thresholds chart |
+| What is the stockout risk for [Item Name]? | mixed | Current stock compared to reorder point and safety stock; risk = high / medium / low |
+
+### Pricing Optimisation (`optimize_pricing`)
+
+| Prompt | Output | Expected Result |
+|--------|--------|-----------------|
+| What is the optimal price for [Item Name]? | mixed | Recommended price, price elasticity (e), R², demand regime (elastic/inelastic/anomalous), expected margin impact |
+| Estimate price elasticity for [Item Name] | mixed | Elasticity value, confidence (R²), current vs recommended price, expected volume change % |
+| Should we raise the price of [Item Name]? | mixed | Pricing recommendation with quantified margin change; warns if demand is inelastic or data is noisy |
+| What price maximises profit for [Item Name]? | mixed | Profit-maximising price from constant-elasticity model, bar chart: Current / Cost / Recommended |
+| Analyse price sensitivity for [Item Name] with marginal cost 250 | mixed | Elasticity regression with overridden marginal cost; recommended price based on cost-plus-markup rule |
+
+### Procurement Optimisation (`optimize_procurement`)
+
+| Prompt | Output | Expected Result |
+|--------|--------|-----------------|
+| Recommend procurement improvements | mixed | Supplier consolidation flag, new-supplier risk alerts, bulk-purchase candidates, priority-ranked action list |
+| Show procurement strategy recommendations | mixed | Top supplier spend share, risk flags for large first-order suppliers, items to order in bulk |
+| Are there any risky new suppliers? | mixed | New suppliers (first purchase within last 90 days) whose first invoice is a statistical outlier (z > 2σ) |
+| Which items should we consolidate into bulk orders? | mixed | Items ordered 4+ times in the last 90 days — candidates for fewer, larger purchase orders |
+| How concentrated is our supplier base? | mixed | Top-5 supplier share of total spend; recommends consolidation if < 70% or flags high concentration if > 90% |
+| Show supplier risk analysis for the last 6 months | mixed | 6-month procurement analysis: spend, concentration, new-supplier outliers, bulk candidates |
+
+### Production Scheduling (`optimize_production_schedule`)
+
+| Prompt | Output | Expected Result |
+|--------|--------|-----------------|
+| Build a production schedule for [Item Name] | mixed | 6-month Silver-Meal schedule with monthly production quantities, ending inventory, setup/holding cost totals |
+| Create a production plan for [Item Name] for next 3 months | mixed | 3-month schedule with demand forecast, recommended production per month, cost breakdown |
+| Optimise production for [Item Name] with monthly capacity 500 units | mixed | Schedule capped at 500 units/month; excess demand rolled forward; capacity utilisation % |
+| What is the optimal lot size for producing [Item Name]? | mixed | Silver-Meal lots that minimise setup + holding cost, shown as a bar chart of demand vs production vs inventory |
+| Show production schedule for [Item Name] with setup cost 200 and holding cost 30% | mixed | Schedule recalculated with custom setup and holding cost inputs |
+
+### Working Capital Optimisation (`optimize_working_capital`)
+
+| Prompt | Output | Expected Result |
+|--------|--------|-----------------|
+| Analyse our working capital | mixed | DSO, DPO, DIO, CCC metrics vs targets; priority-ranked recommendations; current vs target bar chart |
+| What is our cash conversion cycle? | mixed | CCC = DSO + DIO - DPO with component breakdown and comparison to default targets |
+| How can we improve cash flow from operations? | mixed | Working capital recommendations: tighten credit (DSO), extend payables (DPO), reduce inventory days (DIO) |
+| What is our Days Sales Outstanding? | mixed | DSO = (AR outstanding / net sales) × period days, with action if above target of 45 days |
+| How much cash can we free up by improving collections? | mixed | Dollar impact estimate: (current DSO - target DSO) × daily sales |
+| Optimise working capital with target DSO 30 days and DPO 45 days | mixed | CCC analysis with custom DSO and DPO targets; recommendations calibrated to your goals |
+| What is our Days Inventory Outstanding? | mixed | DIO = (inventory value / net purchases) × period days; flags if above 60-day target |
+
+Notes on Prescriptive Analytics:
+- **Inventory**: Uses 12 months of Sales Invoice history; requires `valuation_rate`, `last_purchase_rate`, or `standard_rate` on the Item master.
+- **Pricing**: Requires at least 6 months of sales with price variation (≥ 3 distinct average monthly prices). Low R² (< 0.3) results in a low-confidence warning.
+- **Procurement**: Analyses submitted Purchase Invoices only. New-supplier risk flags use a 2-sigma threshold on first-invoice amounts.
+- **Production**: Forecasts demand using Holt-Winters or Holt's method; needs ≥ 6 months of history. Capacity rollover is one period only.
+- **Working Capital**: Point-in-time AR/AP outstanding; period-window net sales and purchases. Increase `months_back` for a longer averaging window.
+
+---
+
 ## Multi-Company
 
 | Prompt | Output | Expected Result |
