@@ -2,7 +2,8 @@
 # For license information, please see license.txt
 """
 AI Provider Integration Module
-Handles OpenAI, Claude, and Gemini API integrations with streaming support.
+Handles OpenAI, Claude, Gemini, Azure OpenAI, and local OpenAI-compatible
+(Ollama / LM Studio / vLLM) API integrations with streaming support.
 
 Provider configuration uses the unified Chatbot Settings fields:
   ai_provider, api_key, model, temperature, max_tokens
@@ -439,6 +440,46 @@ class AzureOpenAIProvider(OpenAIProvider):
 		return {"params": {"api-version": self.api_version}}
 
 
+LOCAL_LLM_PROVIDER = "Local LLM (OpenAI-compatible)"
+DEFAULT_LOCAL_LLM_BASE_URL = "http://localhost:11434/v1"
+
+
+class LocalLLMProvider(OpenAIProvider):
+	"""Local / self-hosted OpenAI-compatible LLM provider.
+
+	Works with any server that speaks the OpenAI Chat Completions wire format on
+	a configurable base URL — Ollama (http://localhost:11434/v1), LM Studio,
+	vLLM, llama.cpp's server, LiteLLM, etc.
+
+	Differences from the cloud OpenAI provider:
+	- base_url is user-configured (no fixed default endpoint)
+	- the API key is optional; the Authorization header is only sent when a key
+	  is provided (Ollama needs none; secured proxies may require one)
+	"""
+
+	provider_name = LOCAL_LLM_PROVIDER
+
+	def __init__(self, settings):
+		# Skip OpenAIProvider.__init__ — we set fields ourselves
+		AIProvider.__init__(self, settings)
+		self.api_key = settings.get("api_key")
+		self.model = settings.get("model")
+		self.temperature = settings.get("temperature") or 0.7
+		self.max_tokens = settings.get("max_tokens") or 4000
+		self.base_url = (settings.get("local_llm_base_url") or DEFAULT_LOCAL_LLM_BASE_URL).rstrip("/")
+
+	def validate_settings(self):
+		if not self.base_url:
+			frappe.throw("Base URL is required for a Local LLM (e.g. http://localhost:11434/v1).")
+		if not self.model:
+			frappe.throw("Model is required for a Local LLM (the model you pulled, e.g. 'llama3.1').")
+		return True
+
+	def _auth_headers(self) -> dict:
+		# Local servers (e.g. Ollama) need no auth; only send a bearer token if one is set.
+		return {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
+
+
 class ClaudeProvider(AIProvider):
 	"""Anthropic Claude API Integration"""
 
@@ -803,6 +844,9 @@ def _resolve_settings(provider_name: str) -> dict:
 		resolved["azure_deployment_name"] = sd.get("azure_deployment_name")
 		resolved["azure_api_version"] = sd.get("azure_api_version")
 
+	if provider_name == LOCAL_LLM_PROVIDER:
+		resolved["local_llm_base_url"] = sd.get("local_llm_base_url")
+
 	return resolved
 
 
@@ -818,6 +862,8 @@ def get_ai_provider(provider_name: str) -> AIProvider:
 		return GeminiProvider(resolved)
 	elif provider_name == "Azure OpenAI":
 		return AzureOpenAIProvider(resolved)
+	elif provider_name == LOCAL_LLM_PROVIDER:
+		return LocalLLMProvider(resolved)
 	else:
 		frappe.throw(f"Unknown AI provider: {provider_name}")
 
@@ -850,6 +896,8 @@ def get_summary_provider(provider_name: str) -> AIProvider:
 		return GeminiProvider(resolved)
 	elif provider_name == "Azure OpenAI":
 		return AzureOpenAIProvider(resolved)
+	elif provider_name == LOCAL_LLM_PROVIDER:
+		return LocalLLMProvider(resolved)
 	else:
 		frappe.throw(f"Unknown provider for summarisation: {provider_name}")
 
@@ -875,7 +923,8 @@ def get_fallback_provider(primary_provider_name: str) -> AIProvider | None:
 		fallback_api_key = (
 			settings.get_password("fallback_api_key") if getattr(settings, "fallback_api_key", None) else None
 		)
-		if not fallback_api_key:
+		# A Local LLM fallback may run without an API key; all others require one.
+		if not fallback_api_key and fallback_name != LOCAL_LLM_PROVIDER:
 			return None
 
 		resolved = {
@@ -890,6 +939,9 @@ def get_fallback_provider(primary_provider_name: str) -> AIProvider | None:
 			resolved["azure_deployment_name"] = getattr(settings, "fallback_azure_deployment_name", None)
 			resolved["azure_api_version"] = getattr(settings, "fallback_azure_api_version", None)
 
+		if fallback_name == LOCAL_LLM_PROVIDER:
+			resolved["local_llm_base_url"] = getattr(settings, "fallback_local_llm_base_url", None)
+
 		if fallback_name == "OpenAI":
 			return OpenAIProvider(resolved)
 		elif fallback_name == "Claude":
@@ -898,6 +950,8 @@ def get_fallback_provider(primary_provider_name: str) -> AIProvider | None:
 			return GeminiProvider(resolved)
 		elif fallback_name == "Azure OpenAI":
 			return AzureOpenAIProvider(resolved)
+		elif fallback_name == LOCAL_LLM_PROVIDER:
+			return LocalLLMProvider(resolved)
 	except Exception:
 		pass
 

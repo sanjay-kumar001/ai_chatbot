@@ -13,6 +13,7 @@
   "azure_resource_name",
   "azure_deployment_name",
   "azure_api_version",
+  "local_llm_base_url",
   "column_break_api",
   "temperature",
   "max_tokens",
@@ -24,6 +25,7 @@
   "fallback_azure_resource_name",
   "fallback_azure_deployment_name",
   "fallback_azure_api_version",
+  "fallback_local_llm_base_url",
   "tools_tab",
   "erpnext_tools_section",
   "enable_crm_tools",
@@ -82,18 +84,18 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "AI Provider",
-   "options": "OpenAI\nClaude\nGemini\nAzure OpenAI",
+   "options": "OpenAI\nClaude\nGemini\nAzure OpenAI\nLocal LLM (OpenAI-compatible)",
    "reqd": 1
   },
   {
-   "description": "API key for the selected provider. Stored encrypted.",
+   "description": "API key for the selected provider. Stored encrypted. Optional for a Local LLM — leave blank for an unsecured Ollama/LM Studio server.",
    "fieldname": "api_key",
    "fieldtype": "Password",
    "label": "API Key",
-   "reqd": 1
+   "mandatory_depends_on": "eval:doc.ai_provider != 'Local LLM (OpenAI-compatible)'"
   },
   {
-   "description": "Model name. Defaults per provider \u2014 OpenAI: gpt-4o, Claude: claude-sonnet-4-5-20250929, Gemini: gemini-2.5-flash. For Azure OpenAI, leave blank to use the deployment name set below.",
+   "description": "Model name. Defaults per provider \u2014 OpenAI: gpt-4o, Claude: claude-sonnet-4-5-20250929, Gemini: gemini-2.5-flash. For Azure OpenAI, leave blank to use the deployment name set below. For a Local LLM, enter the model you pulled, e.g. 'llama3.1' or 'qwen2.5'.",
    "fieldname": "model",
    "fieldtype": "Data",
    "label": "Model"
@@ -121,6 +123,15 @@
    "fieldname": "azure_api_version",
    "fieldtype": "Data",
    "label": "Azure API Version"
+  },
+  {
+   "depends_on": "eval:doc.ai_provider == 'Local LLM (OpenAI-compatible)'",
+   "mandatory_depends_on": "eval:doc.ai_provider == 'Local LLM (OpenAI-compatible)'",
+   "default": "http://localhost:11434/v1",
+   "description": "Base URL of the OpenAI-compatible server. Ollama: http://localhost:11434/v1. Also works with LM Studio, vLLM, llama.cpp, LiteLLM, etc. Must end in /v1.",
+   "fieldname": "local_llm_base_url",
+   "fieldtype": "Data",
+   "label": "Local LLM Base URL"
   },
   {
    "fieldname": "column_break_api",
@@ -157,7 +168,7 @@
    "fieldname": "fallback_provider",
    "fieldtype": "Select",
    "label": "Fallback AI Provider",
-   "options": "\nOpenAI\nClaude\nGemini\nAzure OpenAI"
+   "options": "\nOpenAI\nClaude\nGemini\nAzure OpenAI\nLocal LLM (OpenAI-compatible)"
   },
   {
    "depends_on": "eval:doc.fallback_provider",
@@ -196,6 +207,15 @@
    "fieldname": "fallback_azure_api_version",
    "fieldtype": "Data",
    "label": "Fallback Azure API Version"
+  },
+  {
+   "depends_on": "eval:doc.fallback_provider == 'Local LLM (OpenAI-compatible)'",
+   "mandatory_depends_on": "eval:doc.fallback_provider == 'Local LLM (OpenAI-compatible)'",
+   "default": "http://localhost:11434/v1",
+   "description": "Base URL of the OpenAI-compatible server for the fallback provider. Must end in /v1.",
+   "fieldname": "fallback_local_llm_base_url",
+   "fieldtype": "Data",
+   "label": "Fallback Local LLM Base URL"
   },
   {
    "fieldname": "tools_tab",
