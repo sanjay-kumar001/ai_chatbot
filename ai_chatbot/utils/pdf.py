@@ -21,6 +21,8 @@ from __future__ import annotations
 
 import frappe
 
+from ai_chatbot.core.logger import log_error
+
 
 def html_to_pdf(html: str) -> bytes:
 	"""Convert an HTML string to PDF bytes.
@@ -39,18 +41,18 @@ def html_to_pdf(html: str) -> bytes:
 
 		return HTML(string=html).write_pdf()
 	except ImportError:
-		frappe.log_error(
+		log_error(
 			"WeasyPrint not installed — falling back to wkhtmltopdf. Install with: pip install weasyprint",
-			"AI Chatbot PDF",
+			title="PDF",
 		)
 		from frappe.utils.pdf import get_pdf
 
 		return get_pdf(html)
 	except Exception as e:
 		# WeasyPrint installed but failed (e.g. missing system libs) — fallback
-		frappe.log_error(
+		log_error(
 			f"WeasyPrint rendering failed, falling back to wkhtmltopdf: {e!s}",
-			"AI Chatbot PDF",
+			title="PDF",
 		)
 		from frappe.utils.pdf import get_pdf
 

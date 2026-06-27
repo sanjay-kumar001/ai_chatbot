@@ -16,6 +16,7 @@ import frappe
 
 from ai_chatbot.ai.agents.context import AgentStep
 from ai_chatbot.ai.agents.prompts import get_planner_prompt
+from ai_chatbot.core.logger import log_error
 
 MAX_STEPS = 6
 
@@ -67,7 +68,7 @@ def create_plan(
 		return _parse_plan(provider, response)
 
 	except Exception as e:
-		frappe.log_error(f"Agent planner error: {e!s}", "AI Chatbot Agent")
+		log_error(f"Agent planner error: {e!s}", title="Agent")
 		return []
 
 
@@ -143,7 +144,7 @@ def _parse_plan(provider, response: dict) -> list[AgentStep]:
 		return _validate_plan(steps)
 
 	except (json.JSONDecodeError, KeyError, TypeError, ValueError) as e:
-		frappe.log_error(f"Agent planner parse error: {e!s}", "AI Chatbot Agent")
+		log_error(f"Agent planner parse error: {e!s}", title="Agent")
 		return []
 
 

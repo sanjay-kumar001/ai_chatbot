@@ -19,6 +19,7 @@ from ai_chatbot.ai.agents.classifier import classify_query
 from ai_chatbot.ai.agents.context import AgentContext
 from ai_chatbot.ai.agents.planner import create_plan
 from ai_chatbot.ai.agents.prompts import get_synthesis_prompt
+from ai_chatbot.core.logger import log_error
 from ai_chatbot.core.token_optimizer import compress_tool_result
 from ai_chatbot.core.token_tracker import track_token_usage
 
@@ -137,7 +138,7 @@ def run_orchestrated(
 		)
 		context.total_tokens += synthesis_tokens
 	except Exception as e:
-		frappe.log_error(f"Agent synthesis error: {e!s}", "AI Chatbot Agent")
+		log_error(f"Agent synthesis error: {e!s}", title="Agent")
 		return None  # Fall back to simple path
 
 	# Fallback: if synthesis returned empty, build basic response from step data
@@ -395,7 +396,7 @@ def run_orchestrated_streaming(
 		context.total_tokens += synthesis_tokens
 
 	except Exception as e:
-		frappe.log_error(f"Agent streaming synthesis error: {e!s}", "AI Chatbot Agent")
+		log_error(f"Agent streaming synthesis error: {e!s}", title="Agent")
 		return None
 
 	# Fallback: if synthesis returned empty content, build a basic response

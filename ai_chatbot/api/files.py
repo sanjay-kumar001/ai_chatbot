@@ -13,6 +13,8 @@ import mimetypes
 
 import frappe
 
+from ai_chatbot.core.logger import log_error
+
 # Allowed MIME types for upload
 ALLOWED_MIME_TYPES = {
 	# Images (for Vision API)
@@ -104,7 +106,7 @@ def upload_chat_file(conversation_id: str) -> dict:
 		return result
 
 	except Exception as e:
-		frappe.log_error(f"File upload error: {e!s}", "AI Chatbot")
+		log_error(f"File upload error: {e!s}", title="File Upload")
 		return {"success": False, "error": str(e)}
 
 

@@ -210,6 +210,13 @@ def report_stock_balance(
 			"type": "string",
 			"description": "Filter by specific item code.",
 		},
+		"range": {
+			"type": "string",
+			"description": (
+				"Comma-separated ageing buckets in days, e.g. '30, 60, 90'. "
+				"Optional — defaults to '30, 60, 90'."
+			),
+		},
 	},
 	doctypes=["Stock Ledger Entry"],
 )
@@ -218,6 +225,7 @@ def report_stock_ageing(
 	to_date=None,
 	warehouse=None,
 	item_code=None,
+	range=None,
 ):
 	"""Run ERPNext Stock Ageing report."""
 	company = get_default_company(company)
@@ -226,6 +234,9 @@ def report_stock_ageing(
 	filters = {
 		"company": company,
 		"to_date": to_date,
+		# ERPNext's stock_ageing.execute() unconditionally calls
+		# filters.range.split(","), so `range` must never be None.
+		"range": range or "30, 60, 90",
 	}
 
 	if warehouse:

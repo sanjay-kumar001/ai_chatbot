@@ -12,12 +12,34 @@ import frappe
 from ai_chatbot.api.history import get_conversation_history
 from ai_chatbot.core.ai_utils import extract_response, extract_tool_info, safe_json
 from ai_chatbot.core.audit import log_audit_event
+from ai_chatbot.core.exceptions import ChatbotError
 from ai_chatbot.core.logger import log_error, log_info, log_warning
 from ai_chatbot.core.prompts import build_system_prompt, inject_recall_context, inject_routing_context
 from ai_chatbot.core.token_optimizer import optimize_history
 from ai_chatbot.core.token_tracker import estimate_cost, track_token_usage
 from ai_chatbot.tools.base import BaseTool, get_tools_for_message
 from ai_chatbot.utils.ai_providers import get_ai_provider
+
+# Generic fallback shown to the user when an unexpected exception escapes the
+# chat pipeline. The full traceback is captured in the Frappe Error Log via
+# ``log_error``, so users see a clean message instead of an internal stack/URL.
+_FALLBACK_USER_ERROR = (
+	"Something went wrong while processing your message. "
+	"An administrator has been notified — please check the Error Log for details."
+)
+
+
+def _user_facing_error(error: Exception) -> str:
+	"""Return a message safe to surface in the chat UI.
+
+	``ChatbotError`` subclasses already carry classified, friendly messages
+	(see ``ai_providers.classify_api_error``). Everything else collapses to
+	a generic notice — the original exception is logged separately, so no
+	information is lost; it just doesn't get rendered to the end user.
+	"""
+	if isinstance(error, ChatbotError):
+		return str(error)
+	return _FALLBACK_USER_ERROR
 
 
 @frappe.whitelist()
@@ -286,7 +308,7 @@ def send_message(
 
 	except Exception as e:
 		log_error(f"Error sending message: {e!s}", title="Chat API")
-		return {"success": False, "error": str(e)}
+		return {"success": False, "error": _user_facing_error(e)}
 
 
 def generate_ai_response(conversation, provider, history, tools) -> dict:
@@ -489,7 +511,7 @@ def generate_ai_response(conversation, provider, history, tools) -> dict:
 			status="error",
 			error_message=str(e),
 		)
-		return {"success": False, "error": str(e)}
+		return {"success": False, "error": _user_facing_error(e)}
 
 
 @frappe.whitelist()

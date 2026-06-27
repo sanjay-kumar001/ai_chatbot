@@ -18,6 +18,7 @@ import re
 
 import frappe
 
+from ai_chatbot.core.logger import log_error
 from ai_chatbot.idp.extractors.base import extract_content
 from ai_chatbot.idp.schema import build_schema_prompt, get_doctype_schema
 from ai_chatbot.utils.ai_providers import get_ai_provider
@@ -104,7 +105,7 @@ def extract_and_map(
 	try:
 		response = provider.chat_completion(messages)
 	except Exception as e:
-		frappe.log_error(f"IDP extraction LLM error: {e!s}", "AI Chatbot IDP")
+		log_error(f"IDP extraction LLM error: {e!s}", title="IDP")
 		return {"success": False, "error": f"AI provider error: {e!s}"}
 
 	# Step 5: Parse response
@@ -185,7 +186,7 @@ def extract_raw(
 	try:
 		response = provider.chat_completion(messages)
 	except Exception as e:
-		frappe.log_error(f"IDP raw extraction LLM error: {e!s}", "AI Chatbot IDP")
+		log_error(f"IDP raw extraction LLM error: {e!s}", title="IDP")
 		return {"success": False, "error": f"AI provider error: {e!s}"}
 
 	# Step 4: Parse response

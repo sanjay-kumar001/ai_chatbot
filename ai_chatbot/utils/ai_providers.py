@@ -47,13 +47,33 @@ AUTH_ERROR_MESSAGE = (
 	"Authentication failed with the AI provider. Please check that your API key is valid in Chatbot Settings."
 )
 
+ENDPOINT_NOT_FOUND_MESSAGE = (
+	"The AI provider endpoint was not found (404). This usually means the configured "
+	"Base URL or model name in Chatbot Settings is incorrect. "
+	"Please verify the provider's API endpoint and model name."
+)
+
+SERVER_ERROR_MESSAGE = (
+	"The AI provider returned a server error. Please try again in a few moments."
+)
+
+CONNECTION_ERROR_MESSAGE = (
+	"Could not reach the AI provider. Please check your network connection and "
+	"the Base URL configured in Chatbot Settings."
+)
+
+GENERIC_PROVIDER_MESSAGE = (
+	"The AI provider returned an unexpected error. Check the Error Log in the desk for details."
+)
+
 
 def classify_api_error(error: requests.exceptions.RequestException) -> str:
 	"""Classify an API error and return a user-friendly message.
 
-	Detects rate limit (429), authentication (401/403), and quota errors
-	and returns a clear message. Falls back to the original error string
-	for other error types.
+	Maps known HTTP status codes (429, 401/403, 404, 5xx) and network errors
+	to short, actionable messages. The raw error is always preserved in the
+	server-side Error Log via ``log_provider_error`` — the string returned
+	here is what the user sees in the UI, so it must stay safe to display.
 	"""
 	status_code = None
 	response_body = ""
@@ -79,7 +99,18 @@ def classify_api_error(error: requests.exceptions.RequestException) -> str:
 	if status_code in (401, 403):
 		return AUTH_ERROR_MESSAGE
 
-	return str(error)
+	if status_code == 404:
+		return ENDPOINT_NOT_FOUND_MESSAGE
+
+	if status_code and 500 <= status_code < 600:
+		return SERVER_ERROR_MESSAGE
+
+	# Network failures (DNS, refused, timeout) have no response attached.
+	if isinstance(error, (requests.exceptions.ConnectionError, requests.exceptions.Timeout)):
+		return CONNECTION_ERROR_MESSAGE
+
+	# Unknown error — don't leak the raw URL/stack to the UI.
+	return GENERIC_PROVIDER_MESSAGE
 
 
 def _extract_error_details(error: requests.exceptions.RequestException) -> tuple[int, float | None]:

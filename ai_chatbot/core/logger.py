@@ -142,6 +142,12 @@ def log_debug(message: str, **fields) -> None:
 	_get_app_logger().debug(full)
 
 
+#: Frappe's Error Log `method` (title) field is Data(140). Leave a small margin
+#: so we never trigger Frappe's CharacterLengthExceededError. Keep the leading
+#: characters — those are the most informative for scanning the desk.
+_MAX_ERROR_TITLE_LEN = 130
+
+
 def log_error(message, title=None, reference_doctype=None, reference_name=None):
 	"""Log an error to both the file logger and Frappe's Error Log.
 
@@ -155,6 +161,11 @@ def log_error(message, title=None, reference_doctype=None, reference_name=None):
 		reference_name: Optional linked document name.
 	"""
 	full_title = f"{LOG_TITLE} - {title}" if title else LOG_TITLE
+	# Guard against the 140-char limit on Error Log's title field. The full
+	# detail still lands in the `message` body, so nothing is lost.
+	if len(full_title) > _MAX_ERROR_TITLE_LEN:
+		full_title = full_title[: _MAX_ERROR_TITLE_LEN - 1] + "…"
+
 	log_line = f"{full_title} | {message}"
 	_get_app_logger().error(log_line)
 

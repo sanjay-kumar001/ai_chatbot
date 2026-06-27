@@ -17,6 +17,7 @@ import json
 import frappe
 
 from ai_chatbot.core.config import get_default_company
+from ai_chatbot.core.logger import log_error
 from ai_chatbot.data.currency import build_currency_response
 from ai_chatbot.data.operations import create_document
 from ai_chatbot.idp.comparison import compare_with_record
@@ -357,7 +358,7 @@ def create_from_extracted_data(
 			result["auto_created_masters"] = created_masters
 		return build_currency_response(result, company)
 	except Exception as e:
-		frappe.log_error(f"IDP record creation error: {e!s}", "AI Chatbot IDP")
+		log_error(f"IDP record creation error: {e!s}", title="IDP")
 		return {"error": f"Failed to create {target_doctype}: {e!s}"}
 
 
@@ -619,7 +620,7 @@ def _auto_create_missing_masters(
 			data[field] = new_doc.name
 			created.append(f"{dt}: {new_doc.name}")
 		except Exception as e:
-			frappe.log_error(f"IDP auto-create {dt} '{value}' failed: {e!s}", "AI Chatbot IDP")
+			log_error(f"IDP auto-create {dt} '{value}' failed: {e!s}", title="IDP")
 
 	# Resolve item defaults
 	is_stock_item = int(item_defaults.get("is_stock_item", 0))
@@ -659,7 +660,7 @@ def _auto_create_missing_masters(
 			item[_ITEM_FIELD] = new_item.name
 			created.append(f"Item: {new_item.name}")
 		except Exception as e:
-			frappe.log_error(f"IDP auto-create Item '{item_code}' failed: {e!s}", "AI Chatbot IDP")
+			log_error(f"IDP auto-create Item '{item_code}' failed: {e!s}", title="IDP")
 
 	# UOM
 	for item in items_table:
@@ -671,7 +672,7 @@ def _auto_create_missing_masters(
 				new_uom.insert(ignore_permissions=True)
 				created.append(f"UOM: {uom}")
 			except Exception as e:
-				frappe.log_error(f"IDP auto-create UOM '{uom}' failed: {e!s}", "AI Chatbot IDP")
+				log_error(f"IDP auto-create UOM '{uom}' failed: {e!s}", title="IDP")
 
 	if created:
 		frappe.db.commit()

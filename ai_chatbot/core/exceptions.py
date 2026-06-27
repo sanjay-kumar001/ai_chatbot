@@ -27,14 +27,23 @@ class ToolExecutionError(ChatbotError):
 
 
 class ProviderError(ChatbotError):
-	"""Raised when an AI provider fails"""
+	"""Raised when an AI provider fails.
+
+	``message`` is the user-facing summary (already classified — safe to
+	surface in the UI). ``original_error`` is kept on the instance for
+	server-side logging only; it is NOT appended to the user message,
+	so raw provider URLs and stack details do not leak to the chat UI.
+	"""
 
 	def __init__(self, provider_name, message=None, original_error=None):
 		self.provider_name = provider_name
 		self.original_error = original_error
-		msg = message or f"AI provider '{provider_name}' failed"
-		if original_error:
-			msg += f": {original_error}"
+		if message:
+			msg = message
+		elif original_error:
+			msg = f"AI provider '{provider_name}' failed: {original_error}"
+		else:
+			msg = f"AI provider '{provider_name}' failed"
 		super().__init__(msg, error_code="PROVIDER_ERROR")
 
 

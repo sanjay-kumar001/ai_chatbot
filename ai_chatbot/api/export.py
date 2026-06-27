@@ -23,6 +23,7 @@ from ai_chatbot.automation.formatters import (
 	_style_html_tables,
 	format_html_email,
 )
+from ai_chatbot.core.logger import log_error
 
 # ---------------------------------------------------------------------------
 # Single message export
@@ -84,7 +85,10 @@ def export_message_pdf(message_name: str) -> dict:
 	except frappe.PermissionError:
 		raise
 	except Exception as e:
-		frappe.log_error(f"PDF export failed for message {message_name}: {e!s}", "AI Chatbot PDF Export")
+		log_error(
+			f"PDF export failed for message {message_name}: {e!s}",
+			title="PDF Export",
+		)
 		return {"success": False, "error": str(e)}
 
 
@@ -151,9 +155,9 @@ def export_conversation_pdf(conversation_id: str) -> dict:
 	except frappe.PermissionError:
 		raise
 	except Exception as e:
-		frappe.log_error(
+		log_error(
 			f"PDF export failed for conversation {conversation_id}: {e!s}",
-			"AI Chatbot PDF Export",
+			title="PDF Export",
 		)
 		return {"success": False, "error": str(e)}
 

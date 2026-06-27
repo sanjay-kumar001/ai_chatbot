@@ -509,7 +509,9 @@ def generate_conversation_summary(
 		return summary_text
 
 	except Exception as e:
-		frappe.log_error(f"Summarisation error: {e}", "AI Chatbot")
+		from ai_chatbot.core.logger import log_error
+
+		log_error(f"Summarisation error: {e}", title="Summarisation")
 		return cached_summary or ""
 
 

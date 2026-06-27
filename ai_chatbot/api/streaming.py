@@ -405,6 +405,14 @@ def _friendly_error_message(error: Exception) -> str:
 
 	Avoids leaking stack traces or internal details to the frontend.
 	"""
+	# ChatbotError subclasses (e.g. ProviderAPIError) already carry a
+	# classified, sanitized message via ``classify_api_error``. Trust them
+	# instead of re-running heuristics over their text.
+	from ai_chatbot.core.exceptions import ChatbotError
+
+	if isinstance(error, ChatbotError):
+		return str(error)
+
 	msg = str(error).lower()
 
 	# Rate limit / throttling (various provider phrasings)
@@ -423,6 +431,11 @@ def _friendly_error_message(error: Exception) -> str:
 		)
 	if "timeout" in msg or "timed out" in msg:
 		return "The request timed out. Try a simpler question or a shorter conversation."
+	if "404" in msg and ("not found" in msg or "client error" in msg):
+		return (
+			"The AI provider endpoint was not found. Please check the Base URL "
+			"and model name in Chatbot Settings."
+		)
 	if "401" in msg or "auth" in msg or "api key" in msg:
 		return "Authentication with the AI provider failed. Please check the API key in Chatbot Settings."
 	if "connection" in msg or "connect" in msg:
@@ -430,11 +443,8 @@ def _friendly_error_message(error: Exception) -> str:
 	if "context" in msg and "length" in msg:
 		return "The conversation is too long for the AI model's context window. Start a new chat or ask a shorter question."
 
-	# Generic fallback — include a sanitized excerpt of the original error
-	# so the user has some actionable context instead of a blank message.
-	original = str(error).strip()
-	if original and len(original) < 200:
-		return f"An error occurred: {original}"
+	# Generic fallback — do NOT include the raw error text (it may carry
+	# provider URLs or internal paths). The full detail is in the Error Log.
 	return "Something went wrong while generating the response. Please try again."
 
 
