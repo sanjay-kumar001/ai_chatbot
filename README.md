@@ -56,6 +56,8 @@
 - Trial balance, GL summary, account statement — authoritative accounting data from GL entries
 - Frontend renders indented data tables with group headers, subtotals, and bold formatting
 
+![AI Financial Analysis](screenshots/ai_financial_analysis.gif)
+
 ### Voice Communication
 - Speech-to-text input (Web Speech API) and text-to-speech output (SpeechSynthesis)
 - User defined voice output language in **Chabot Settings**

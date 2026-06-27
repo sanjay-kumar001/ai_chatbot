@@ -36,7 +36,7 @@
   >
     <!-- Header Row: Logo (left) | Settings + Toggle (right) -->
     <div class="flex items-center justify-between px-3 py-3 border-b border-gray-200 dark:border-gray-800">
-      <img :src="logoSvg" alt="AI Chatbot" class="w-8 h-8 dark:invert" />
+      <img :src="sidebarLogo" alt="AI Chatbot" class="w-8 h-8" />
       <div class="flex items-center gap-1">
         <button
           @click="openSettings"
@@ -174,13 +174,12 @@
 </template>
 
 <script setup>
-import { ref, computed, inject } from 'vue'
+import { ref, computed } from 'vue'
 import {
   Plus, Search, Settings, Trash2, MessageSquare,
   PanelLeftOpen, PanelLeftClose, X,
 } from 'lucide-vue-next'
-
-const logoSvg = inject('logoSvg')
+import sidebarLogo from '../assets/logo.png'
 
 const props = defineProps({
   conversations: {

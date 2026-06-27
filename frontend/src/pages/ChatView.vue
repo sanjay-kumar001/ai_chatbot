@@ -229,10 +229,11 @@ import { chatAPI } from '../utils/api'
 import { renderMarkdown } from '../utils/markdown'
 import { useStreaming } from '../composables/useStreaming'
 import { useSocket } from '../composables/useSocket'
-import logoSvg from '../assets/logo.svg'
+import logoSvg from '../assets/ai_think.png'
 import { useVoiceOutput } from '../composables/useVoiceOutput'
 
-// Provide logoSvg to all descendant components
+// Provide the assistant avatar to descendant components (ChatMessage,
+// TypingIndicator, streaming preview). Sidebar uses its own logo.png.
 provide('logoSvg', logoSvg)
 
 const conversations = ref([])
