@@ -26,9 +26,10 @@ class ChatbotConversation(Document):
 
 	def validate(self):
 		"""Validate document before save"""
-		valid_providers = ("OpenAI", "Claude", "Gemini")
-		if self.ai_provider not in valid_providers:
-			frappe.throw(f"Invalid AI provider. Must be one of: {', '.join(valid_providers)}")
+		from ai_chatbot.utils.ai_providers import SUPPORTED_PROVIDERS
+
+		if self.ai_provider not in SUPPORTED_PROVIDERS:
+			frappe.throw(f"Invalid AI provider. Must be one of: {', '.join(SUPPORTED_PROVIDERS)}")
 
 	def on_trash(self):
 		"""Called when document is deleted — cascade to linked records"""

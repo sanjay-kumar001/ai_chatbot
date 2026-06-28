@@ -529,8 +529,15 @@ def _stream_with_tools(
 		# Execute tool calls and add results to history
 		all_tool_calls.extend(round_tool_calls)
 
-		# Add assistant message with tool calls to history
-		if ai_provider in ("OpenAI", "Gemini"):
+		# Add assistant message with tool calls to history. The OpenAI wire
+		# format is shared by OpenAI itself, Gemini's compat endpoint, Azure
+		# OpenAI, and any Local LLM gateway (Ollama / LM Studio / vLLM /
+		# DashScope compatible-mode) — all of which require the
+		# {id, type, function:{name, arguments:"<json>"}} envelope on the
+		# assistant turn.
+		from ai_chatbot.core.ai_utils import is_openai_format
+
+		if is_openai_format(ai_provider):
 			openai_tool_calls = []
 			for tc in round_tool_calls:
 				try:

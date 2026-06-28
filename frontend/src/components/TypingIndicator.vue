@@ -5,7 +5,7 @@
     <img
       :src="logoSvg"
       alt="AI"
-      class="w-10 h-10 rounded-full flex-shrink-0"
+      class="w-6 h-6 rounded-full flex-shrink-0"
     />
     <div class="flex items-center gap-2">
       <div class="flex gap-1">

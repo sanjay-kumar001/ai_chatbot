@@ -447,6 +447,42 @@ def generate_ai_response(conversation, provider, history, tools) -> dict:
 		tool_calls = all_tool_calls
 		tokens_used = prompt_tokens + completion_tokens
 
+		# Empty-content guard — mirror of the streaming path safety net at
+		# streaming.py:257. Without this, an LLM that returns no text and no
+		# tool calls would persist a blank assistant message and the chat UI
+		# would render a fully empty bubble (see incident with CHAT-00012 /
+		# MSG-00014).
+		if not (content or "").strip():
+			if all_tool_calls:
+				has_confirmation = any(
+					isinstance(tr, dict) and tr.get("confirmation_required") for tr in all_tool_results
+				)
+				if has_confirmation:
+					content = (
+						"A confirmation card has been generated for your review. "
+						"Please check the details and click Save Draft or Submit to proceed."
+					)
+				else:
+					log_error(
+						f"Empty content after tool execution. Provider={ai_provider}, "
+						f"tools={[tc.get('name') or tc.get('function', {}).get('name') for tc in all_tool_calls]}",
+						title="Chat Empty After Tools",
+					)
+					content = (
+						"I processed your request and executed the required tools, but was "
+						"unable to generate a summary. Please try rephrasing your question."
+					)
+			else:
+				log_error(
+					f"Empty LLM response. Provider={ai_provider}, model={provider.model}, "
+					f"prompt_tokens={prompt_tokens}, completion_tokens={completion_tokens}",
+					title="Chat Empty Response",
+				)
+				content = (
+					"I was unable to generate a response. This may be a temporary issue "
+					"with the AI provider. Please try again."
+				)
+
 		# Track token usage
 		track_token_usage(
 			provider=ai_provider,

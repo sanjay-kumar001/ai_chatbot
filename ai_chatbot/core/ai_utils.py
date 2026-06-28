@@ -11,9 +11,24 @@ and automation executor.
 import json
 
 
+#: Providers whose wire format is OpenAI Chat Completions. Azure OpenAI, the
+#: Gemini OpenAI-compatible endpoint, and any user-configured Local LLM
+#: (Ollama / LM Studio / vLLM / DashScope's compatible-mode) all parse and
+#: format tool calls identically to OpenAI itself. Claude has its own wire
+#: format and is the only provider that returns False here.
+_OPENAI_FORMAT_PROVIDERS = frozenset(
+	{
+		"OpenAI",
+		"Gemini",
+		"Azure OpenAI",
+		"Local LLM (OpenAI-compatible)",
+	}
+)
+
+
 def is_openai_format(provider_name: str) -> bool:
 	"""Return True if the provider uses OpenAI-compatible response format."""
-	return provider_name in ("OpenAI", "Gemini")
+	return provider_name in _OPENAI_FORMAT_PROVIDERS
 
 
 def extract_response(provider_name: str, response: dict) -> tuple:

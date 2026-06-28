@@ -18,6 +18,18 @@ from ai_chatbot.core.exceptions import ProviderAPIError
 from ai_chatbot.core.logger import log_provider_error
 
 # Default models per provider
+#: Provider names accepted by ``get_ai_provider`` and surfaced in the
+#: Chatbot Settings / Chatbot Conversation Select fields. Keep this in sync
+#: with the ``options`` lists in the corresponding DocType JSON files —
+#: ``ChatbotConversation.validate`` uses it to reject unknown values.
+SUPPORTED_PROVIDERS = (
+	"OpenAI",
+	"Claude",
+	"Gemini",
+	"Azure OpenAI",
+	"Local LLM (OpenAI-compatible)",
+)
+
 DEFAULT_MODELS = {
 	"OpenAI": "gpt-4o",
 	"Claude": "claude-sonnet-4-5-20250929",
@@ -157,6 +169,16 @@ class AIProvider:
 	def __init__(self, settings):
 		self.settings = settings
 
+	@property
+	def log_display_name(self) -> str:
+		"""Name shown in log lines and Error Log titles.
+
+		Defaults to ``provider_name``; subclasses can override to surface
+		more useful detail (e.g. the upstream host for a Local LLM that
+		could be Ollama, LM Studio, DashScope, vLLM, etc.).
+		"""
+		return getattr(self, "provider_name", type(self).__name__)
+
 	def chat_completion(self, messages, tools=None, stream=False):
 		raise NotImplementedError
 
@@ -235,8 +257,8 @@ class OpenAIProvider(AIProvider):
 			return response.json()
 
 		except requests.exceptions.RequestException as e:
-			log_provider_error(self.provider_name, e)
-			_raise_provider_api_error(self.provider_name, e)
+			log_provider_error(self.log_display_name, e)
+			_raise_provider_api_error(self.log_display_name, e)
 
 	def chat_completion_stream(self, messages, tools=None):
 		"""Yield structured streaming events from OpenAI.
@@ -298,7 +320,13 @@ class OpenAIProvider(AIProvider):
 						"completion_tokens": usage.get("completion_tokens", 0),
 					}
 
-				choice = chunk.get("choices", [{}])[0]
+				# Some providers (OpenAI usage-only chunk, DashScope/Qwen, some
+				# Gemini chunks) send ``"choices": []`` — using dict.get's default
+				# only catches the missing-key case, so guard the index too.
+				choices = chunk.get("choices") or [{}]
+				if not choices:
+					continue
+				choice = choices[0]
 				delta = choice.get("delta", {})
 				finish_reason = choice.get("finish_reason")
 
@@ -344,7 +372,7 @@ class OpenAIProvider(AIProvider):
 					yield {"type": "finish", "finish_reason": finish_reason}
 
 		except requests.exceptions.RequestException as e:
-			log_provider_error(self.provider_name, e)
+			log_provider_error(self.log_display_name, e)
 			status_code, retry_after = _extract_error_details(e)
 			yield {
 				"type": "error",
@@ -510,9 +538,25 @@ class LocalLLMProvider(OpenAIProvider):
 		# Local servers (e.g. Ollama) need no auth; only send a bearer token if one is set.
 		return {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
 
+	@property
+	def log_display_name(self) -> str:
+		"""Include the upstream host so log lines distinguish Ollama from
+		DashScope from LM Studio etc., e.g. ``Local LLM (localhost:11434)``.
+		Falls back to the bare provider name if the URL can't be parsed.
+		"""
+		try:
+			from urllib.parse import urlparse
+
+			host = urlparse(self.base_url).netloc or self.base_url
+		except Exception:
+			host = self.base_url
+		return f"Local LLM ({host})" if host else self.provider_name
+
 
 class ClaudeProvider(AIProvider):
 	"""Anthropic Claude API Integration"""
+
+	provider_name = "Claude"
 
 	def __init__(self, settings):
 		super().__init__(settings)

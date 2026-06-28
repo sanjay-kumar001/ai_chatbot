@@ -54,7 +54,7 @@
           <img
             :src="logoSvg"
             alt="AI"
-            class="w-10 h-10 rounded-full flex-shrink-0"
+            class="w-6 h-6 rounded-full flex-shrink-0"
           />
           <div class="flex-1">
             <!-- Markdown Content -->
@@ -62,6 +62,15 @@
               v-html="renderedContent"
               class="markdown-body prose prose-sm max-w-none"
             ></div>
+
+            <!-- Safety net: avoid a fully blank bubble when content strips to
+                 nothing and no visual section will render either. -->
+            <div
+              v-if="!hasAnyVisibleSection"
+              class="text-sm italic text-gray-500 dark:text-gray-400"
+            >
+              No response content was generated. Please try rephrasing your question or check the Error Log.
+            </div>
 
             <!-- BI Cards from tool results -->
             <BiCards
@@ -286,6 +295,25 @@ const renderedContent = computed(() => {
     }
   }
   return props.message.content
+})
+
+// Detect "fully blank bubble" — content strips to nothing AND no visual section
+// will render. Used to show a graceful fallback notice instead of an empty card.
+const hasAnyVisibleSection = computed(() => {
+  if (props.message.role !== 'assistant') return true
+
+  const rendered = renderedContent.value
+  const hasText = typeof rendered === 'string' && rendered.replace(/<[^>]*>/g, '').trim().length > 0
+
+  return (
+    hasText
+    || chartData.value.length > 0
+    || biCardsData.value.length > 0
+    || hierarchicalTables.value.length > 0
+    || confirmationData.value.length > 0
+    || readToolCalls.value.length > 0
+    || writeToolCalls.value.length > 0
+  )
 })
 
 // Extract chart data from tool_results

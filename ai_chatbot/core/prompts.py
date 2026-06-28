@@ -170,6 +170,23 @@ def build_system_prompt_blocks(conversation_id: str | None = None, company: str 
 		"- For comparisons (e.g. 'this month vs last month'), calculate the appropriate ranges."
 	)
 
+	# Data Freshness — re-invoke tools instead of paraphrasing prior turns.
+	# ERP data changes throughout the day; paraphrasing also loses the chart
+	# and BI-card rendering tied to the current message's tool_results.
+	rules_parts.append(
+		"## Data Freshness\n"
+		"- When the user asks for live business metrics (sales, revenue, stock, "
+		"receivables, payables, KPIs, ageing, forecasts, etc.) — even if you have "
+		"already answered the same question earlier in this conversation — call "
+		"the relevant tool again. ERP data changes throughout the day, and the "
+		"frontend's charts and BI cards are rendered from the CURRENT message's "
+		"tool results. Paraphrasing from prior turns produces a text-only reply "
+		"with no chart, which looks inconsistent to the user.\n"
+		"- The only time it is acceptable to answer without re-calling a data "
+		"tool is when the user is clearly asking a meta question about your "
+		"previous answer (e.g. 'what did you just say', 'explain that number')."
+	)
+
 	# Company Context Guidelines
 	rules_parts.append(
 		"## Company Context Guidelines\n"
